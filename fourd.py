@@ -10,12 +10,18 @@ import matplotlib.pyplot as plt
 filename = "horse.mp4"
 filename = "horse-slow.mp4" # 10x temporal upscale by runwayml.com
 filename = "horse-slow-cut.mp4" # first 340 frames of horse-slow.mp4
-# filename = "horse-hq-cut.mp4" # https://www.youtube.com/watch?v=QcNe8Akm1ts
+filename = "horse-hq.mp4" # https://www.youtube.com/watch?v=QcNe8Akm1ts
+
+# first ffmpeg -i horse-hq.mp4 -ss 00:00:02.50 -t 00:00:01.16 horse-hq-cut.mp4
+# and then 10x temporal upscale by runwayml.com:
+filename = "horse-hq-cut-slow.mp4"
+
 # filename = "lapdance.mp4"
 video = skvideo.io.vread(filename)  
 print("video.shape", video.shape, video.size / 1e6, "megabytes")
 
-video = (video > 50).astype(np.uint8).max(axis=3)
+# video = (video > 50).astype(np.uint8).max(axis=3)
+video = (video[:, :, :, 1].astype(int) - video[:, :, :, 0].astype(int) > 128).astype(np.uint8)
 video = 1 - video
 
 # this is specific to horse.mp4 that has those cinematic stripes at the top and bottom.
@@ -40,6 +46,8 @@ elif filename.startswith("horse-slow"):
         frames.append(upscaled_frame)
     video = np.array(frames)
     print("after spatial upsampling", video.shape, video.dtype, video.max())
+elif filename.startswith("horse-hq"):
+    video = video[:, 18:318, :]
 
 # we destroy first and last frame, this is the laziest way to add front and back to polytope
 video[0] = 0
