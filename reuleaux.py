@@ -34,6 +34,14 @@ def test_sd():
     values = values.reshape(xy_grid.shape)
     print(values.shape)
     plt.imshow(values) # [400:600, 400:600]
+
+    # keep this in sync with sd_reuleaux_triangle(), otherwise it's not testing it
+    triangle = np.exp(np.pi * 2j / 3 * np.arange(3)) / 3 ** 0.5
+    plt.scatter((triangle.imag + 1) / 2 * n, (triangle.real + 1) / 2 * n, marker='x')
+    x = np.sqrt(radius ** 2 - 1 / 4) + triangle[1].real
+    dual_triangle = x * np.exp(np.pi * 2j / 3 * np.array([1, 3, 5]))
+    plt.scatter((dual_triangle.imag + 1) / 2 * n, (dual_triangle.real + 1) / 2 * n)
+
     plt.show()
 
 
@@ -73,11 +81,59 @@ x, y, z = grid[..., 0], grid[..., 1], grid[..., 2]
 vol = fun(grid, center_radius=center_radius, triangle_side=triangle_side,
     reuleaux_radius=reuleaux_radius, twist_ratio=twist_ratio)
 
+
+def visualize_2d_slices(vol):
+    print("cube side (not size)", 2 * cube_size)
+    plt.imshow(vol[vol.shape[0] // 2, :, :] > 0)
+    plt.show()
+    plt.imshow(vol[:, vol.shape[0] // 2, :] > 0)
+    plt.show()
+    plt.imshow(vol[:, :, vol.shape[2] // 2] > 0)
+    plt.show()
+
+
+visualize_2d_slices(vol)
+
+
+def find_changes(vec):
+    switches = vec[1:] - vec[:-1]
+    assert np.count_nonzero(switches == +1) == 2
+    assert np.count_nonzero(switches == -1) == 2
+    ups = np.where(switches == +1)[0]
+    downs = np.where(switches == -1)[0]
+    return np.array([ups[0], downs[0], ups[1], downs[1]])
+
+
+def stats(switches):
+    print("inner diag", switches[2] - switches[1])
+    print("outer diag", switches[3] - switches[0])
+    print("center diag", switches[2:].mean() - switches[:2].mean())
+    print("thickness", (switches[1]- switches[0] + switches[3]- switches[2]) / 2)
+
+
+def verify_parameters(vol):
+    ring_slice = (vol[:, :, vol.shape[2] // 2] < 0).astype(int)
+    ring_slice_x = ring_slice[ring_slice.shape[0] // 2, :]
+    ring_slice_y = ring_slice[:, ring_slice.shape[1] // 2]
+
+    spacing = 2 * cube_size / n
+    switches_x = find_changes(ring_slice_x) * spacing
+    print("----\nhorizontal piercing")
+    stats(switches_x)
+    switches_y = find_changes(ring_slice_y) * spacing
+    print("----\nvertical piercing")
+    stats(switches_y)
+
+
+verify_parameters(vol)
+
+
 # vol[n//2:, :, :] = 1e-3
 # vol = vol[::-1, :, :]
 iso_val = 0.0
 verts, faces, normals, values = measure.marching_cubes(vol, level=iso_val,
-    spacing=[cube_size / n] * 3, allow_degenerate=False)
+    # the [blah] * 3 means [blah, blah, blah], not [3 * blah]!
+    spacing=[2 * cube_size / n] * 3, allow_degenerate=False)
 
 print(f"{len(verts)} vertices, {len(faces)} faces")
 
@@ -86,7 +142,9 @@ your_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
 for i, face in enumerate(faces):
     for j in range(3):
         your_mesh.vectors[i][j] = verts[face[j]]
-your_mesh.save(f"reuleaux-mesh-n{n}.stl")
+
+filename = f"reuleaux-mesh-n{n}-center_radius{center_radius}-triangle_side{triangle_side}-reuleaux_radius{reuleaux_radius}-twist_ratio{twist_ratio}.stl"
+your_mesh.save(filename)
 
 
 print("vv visualization")
@@ -101,7 +159,7 @@ fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.plot_trisurf(verts[:, 0], verts[:,1], faces, verts[:, 2],
                 cmap='Spectral', lw=1)
-ax.set_xlim(0, n)
-ax.set_ylim(0, n)
-ax.set_zlim(0, n)
+ax.set_xlim(0, 2 * cube_size)
+ax.set_ylim(0, 2 * cube_size)
+ax.set_zlim(0, 2 * cube_size)
 plt.show()
