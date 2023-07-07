@@ -13,7 +13,7 @@ def dot(p1, p2):
 
 
 def sd_reuleaux_triangle(p, radius):
-    triangle = np.exp(np.pi * 2j / 3 * np.arange(3)) * 3 ** 0.5 / 2
+    triangle = np.exp(np.pi * 2j / 3 * np.arange(3)) / 3 ** 0.5
     x = np.sqrt(radius ** 2 - 1 / 4) + triangle[1].real
     dual_triangle = x * np.exp(np.pi * 2j / 3 * np.array([1, 3, 5]))
     dists =  np.abs(dual_triangle[:, None] - p[None, :]).max(axis=0) - radius
