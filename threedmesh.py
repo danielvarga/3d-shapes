@@ -34,17 +34,17 @@ def fibonacci_sphere(n, randomize=True):
 
 # Sample input points
 points = np.random.normal(size=(50, 3))
-points = fibonacci_sphere(1000, randomize=False)
+points = fibonacci_sphere(50000, randomize=False)
 
 # Compute the convex hull
 hull = ConvexHull(points)
 simplices = hull.simplices
 
 x, y, z = points.T
-freq = 3
+freq = 10
 
 altitudes = np.random.uniform(size=(len(points), ), low=0.5, high=1.0)
-altitudes = (np.sin(x*freq) + np.sin(y*freq) + np.sin(z*freq) / 3) + 2
+altitudes = (np.sin(x*freq) + np.sin(y*freq) + np.sin(z*freq) / 3) + 10
 
 points *= altitudes[:, None]
 
