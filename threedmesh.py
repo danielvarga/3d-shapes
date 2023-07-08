@@ -3,10 +3,10 @@ from scipy.spatial import ConvexHull, Delaunay
 from mayavi import mlab
 from stl import mesh
 
+from neighborhood import *
 
 
 # https://stackoverflow.com/questions/9600801/evenly-distributing-n-points-on-a-sphere/26127012#26127012
-# TODO trivial to vectorize
 def fibonacci_sphere(n, randomize=True):
     rnd = 1.
     if randomize:
@@ -31,9 +31,7 @@ def fibonacci_sphere(n, randomize=True):
 
 
 
-
 # Sample input points
-points = np.random.normal(size=(50, 3))
 points = fibonacci_sphere(50000, randomize=False)
 
 # Compute the convex hull
@@ -42,11 +40,10 @@ simplices = hull.simplices
 
 x, y, z = points.T
 freq = 10
-
 altitudes = np.random.uniform(size=(len(points), ), low=0.5, high=1.0)
 altitudes = (np.sin(x*freq) + np.sin(y*freq) + np.sin(z*freq) / 3) + 10
-
 points *= altitudes[:, None]
+
 
 # Create the numpy-stl mesh object
 stl_mesh = mesh.Mesh(np.zeros(simplices.shape[0], dtype=mesh.Mesh.dtype))
