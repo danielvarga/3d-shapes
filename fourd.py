@@ -36,19 +36,28 @@ if filename == "horse.mp4":
     video = video.reshape((sh[0]*sh[1], sh[2], sh[3]))
 elif filename.startswith("horse-slow"):
     video = video[:, 144:444, :]
-    video = video[1400:1660] # first walk animation loop
+    video = video[1400:1600] # first walk animation loop
 
-    print(video.shape)
-    video = video[::-1, :, :]
-    speed = 2.0
-    t, h, w = video.shape
-    w2 = w + int(speed * t) + 1
-    video2 = np.zeros((t, h, w2))
-    for timestep in range(t):
-        w_delta = int(np.around(speed * timestep))
-        video2[timestep, :, w_delta:(w_delta+w)] = video[timestep, :, :]
 
-    video = video2
+    do_conveyor_belt_removal = True
+    if do_conveyor_belt_removal:
+        print("counteracting conveyor belt effect")
+        video = video[::-1, :, :]
+        speed = 2.2
+        t, h, w = video.shape
+        w2 = w + int(speed * t) + 1
+        video2 = np.zeros((t, h, w2))
+        for timestep in range(t):
+            w_delta = int(np.around(speed * timestep))
+            video2[timestep, :, w_delta:(w_delta+w)] = video[timestep, :, :]
+
+        video2 = np.array([video2] * 2)
+        video2 = np.transpose(video2, (1, 0, 2, 3))
+        sh = video2.shape
+        video2 = video2.reshape((sh[0]*sh[1], sh[2], sh[3]))
+
+        video = video2
+
     video = video.astype(np.float32)
     print("before spatial upsampling", video.shape, video.dtype, video.max())
 
