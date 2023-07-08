@@ -92,7 +92,7 @@ def visualize_2d_slices(vol):
     plt.show()
 
 
-visualize_2d_slices(vol)
+# visualize_2d_slices(vol)
 
 
 def find_changes(vec):
@@ -105,9 +105,9 @@ def find_changes(vec):
 
 
 def stats(switches):
-    print("inner diag", switches[2] - switches[1])
-    print("outer diag", switches[3] - switches[0])
-    print("center diag", switches[2:].mean() - switches[:2].mean())
+    print("inner diam", switches[2] - switches[1])
+    print("outer diam", switches[3] - switches[0])
+    print("center diam", switches[2:].mean() - switches[:2].mean())
     print("thickness", (switches[1]- switches[0] + switches[3]- switches[2]) / 2)
 
 
@@ -145,7 +145,7 @@ for i, face in enumerate(faces):
 
 filename = f"reuleaux-mesh-n{n}-center_radius{center_radius}-triangle_side{triangle_side}-reuleaux_radius{reuleaux_radius}-twist_ratio{twist_ratio}.stl"
 your_mesh.save(filename)
-
+print(f"saved {filename}")
 
 print("vv visualization")
 values = np.linalg.norm(normals[:, :2], axis=1)
