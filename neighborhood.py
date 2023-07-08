@@ -2,6 +2,30 @@ import scipy.spatial
 import numpy as np
 
 
+# https://stackoverflow.com/questions/9600801/evenly-distributing-n-points-on-a-sphere/26127012#26127012
+def fibonacci_sphere(n, randomize=True):
+    rnd = 1.
+    if randomize:
+        rnd = random.random() * n
+
+    points = []
+    offset = 2./n
+    increment = np.pi * (3. - np.sqrt(5.));
+
+    for i in range(n):
+        y = ((i * offset) - 1) + (offset / 2);
+        r = np.sqrt(1 - pow(y,2))
+
+        phi = ((i + rnd) % n) * increment
+
+        x = np.cos(phi) * r
+        z = np.sin(phi) * r
+
+        points.append([x,y,z])
+
+    return np.array(points)
+
+
 def test_tree_query_pairs(ps):
     s = 0
     for i, a in enumerate(ps):
@@ -60,3 +84,14 @@ def sparse_laplacian(n, hoods):
     # dealing with isolated vertices so that all-1 is still an eigenvector.
     s.setdiag([-1 if len(hoods[a])>0 else 0 for a in range(n)])
     return s
+
+
+def build_graph(points):
+    n = len(points)
+    tree = scipy.spatial.cKDTree(points)
+    r = optimize_radius(tree)
+    edges = tree.query_pairs(r)
+    hoods = find_hoods(edges, n)
+    laplacian = sparse_laplacian(n, hoods)
+    assert np.allclose(laplacian.dot(np.ones(n)), np.zeros(n))
+    return laplacian
