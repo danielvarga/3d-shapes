@@ -31,10 +31,10 @@ def optimize_radius(kdtree):
     # too lazy to set radius on a per-point level for complex surfaces.
     n = kdtree.n
     r = np.sqrt(1.0/n)
-    for i in xrange(100):
+    for i in range(100):
         edges = kdtree.query_pairs(r)
         hoods = find_hoods(edges, n)
-        sizes = np.array(map(len, hoods.values()))
+        sizes = np.array(list(map(len, hoods.values())))
         avgdeg = sizes.mean()
         mindeg = sizes.min()
         maxdeg = sizes.max()
@@ -50,7 +50,7 @@ def sparse_laplacian(n, hoods):
     data = []
     row = []
     col = []
-    for a, hood in hoods.iteritems():
+    for a, hood in hoods.items():
         m = len(hood)
         if m > 0:
             data += [1.0 / m] * m
