@@ -9,6 +9,14 @@ import matplotlib.pyplot as plt
 
 filename = "horse.mp4"
 filename = "horse-slow.mp4" # 10x temporal upscale by runwayml.com
+filename = "horse-tensorpix-s4-t2.mp4" # done by app.tensorpix.ai from "horse.mp4", 4x spatial upscale, 2x temporal upscale
+
+
+filename = "horse-tensorpix-s4-t4.mp4" # created from "horse-tensorpix-s4-t2.mp4" by 2x temporal upscale again.
+# ...too big to load, hence this cut:
+# ffmpeg -i horse-tensorpix-s4-t4.mp4 -ss 00:00:11.50 -t 00:00:03.00 horse-tensorpix-s4-t4-run-cut.mp4
+filename = "horse-tensorpix-s4-t4-run-cut.mp4"
+
 '''
 filename = "horse-slow-cut.mp4" # first 340 frames of horse-slow.mp4
 filename = "horse-hq.mp4" # https://www.youtube.com/watch?v=QcNe8Akm1ts
@@ -34,10 +42,30 @@ if filename == "horse.mp4":
     video = np.transpose(video, (1, 0, 2, 3))
     sh = video.shape
     video = video.reshape((sh[0]*sh[1], sh[2], sh[3]))
+elif filename == "horse-tensorpix.mp4":
+    video = video[:, 4*144:4*444, :] # same part as "horse-slow", but 4x spatial upscale
+    video = video[280:320] # same part as "horse-slow", but 2x rather than 10x temporal upscale
+
+    video = np.array([video] * 2 * 5) # 2 because the horse-slow had that, and 5 because this is 5 times faster.
+    video = np.transpose(video, (1, 0, 2, 3))
+    sh = video.shape
+    video = video.reshape((sh[0]*sh[1], sh[2], sh[3]))
+elif filename == "horse-tensorpix-s4-t4-run-cut.mp4":
+    video = video[:, 4*144:4*444, :] # same part as "horse-slow", but 4x spatial upscale
+    # it's already a cut
+    video = video[:]
+
+    '''
+    video = np.array([video] * 10)
+    video = np.transpose(video, (1, 0, 2, 3))
+    sh = video.shape
+    video = video.reshape((sh[0]*sh[1], sh[2], sh[3]))
+    '''
+
+
 elif filename.startswith("horse-slow"):
     video = video[:, 144:444, :]
-    video = video[1400:1600] # first walk animation loop
-
+    video = video[1400:1600]
 
     do_conveyor_belt_removal = True
     if do_conveyor_belt_removal:
@@ -58,10 +86,10 @@ elif filename.startswith("horse-slow"):
 
         video = video2
 
-    video = video.astype(np.float32)
     print("before spatial upsampling", video.shape, video.dtype, video.max())
 
     '''
+    video = video.astype(np.float32)
     frames = []
     new_shape = (video.shape[1] * 4, video.shape[2] * 4)
     for frame in video:
@@ -90,7 +118,8 @@ video = np.transpose(video, (1, 0, 2))
 video = video[::-1, :, :]
 
 iso_val = 0.5
-verts, faces, normals, values = skimage.measure.marching_cubes(video, level=iso_val, allow_degenerate=False)
+temporal_scaling = 10 # one frame has the same width as temporal_scaling pixels.
+verts, faces, normals, values = skimage.measure.marching_cubes(video, level=iso_val, allow_degenerate=False, spacing=(1, temporal_scaling, 1))
 
 print(f"{len(verts)} vertices, {len(faces)} faces")
 
