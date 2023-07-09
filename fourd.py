@@ -15,7 +15,8 @@ filename = "horse-tensorpix-s4-t2.mp4" # done by app.tensorpix.ai from "horse.mp
 filename = "horse-tensorpix-s4-t4.mp4" # created from "horse-tensorpix-s4-t2.mp4" by 2x temporal upscale again.
 # ...too big to load, hence this cut:
 # ffmpeg -i horse-tensorpix-s4-t4.mp4 -ss 00:00:11.50 -t 00:00:03.00 horse-tensorpix-s4-t4-run-cut.mp4
-filename = "horse-tensorpix-s4-t4-run-cut.mp4"
+# ffmpeg -i horse-tensorpix-s4-t8.mp4 -ss 00:00:22.00 -t 00:00:09.05 horse-tensorpix-s4-t8-run-cut.mp4
+filename = "horse-tensorpix-s4-t8-run-cut.mp4"
 
 '''
 filename = "horse-slow-cut.mp4" # first 340 frames of horse-slow.mp4
@@ -50,19 +51,30 @@ elif filename == "horse-tensorpix.mp4":
     video = np.transpose(video, (1, 0, 2, 3))
     sh = video.shape
     video = video.reshape((sh[0]*sh[1], sh[2], sh[3]))
-elif filename == "horse-tensorpix-s4-t4-run-cut.mp4":
+elif filename == "horse-tensorpix-s4-t8-run-cut.mp4":
     video = video[:, 4*144:4*444, :] # same part as "horse-slow", but 4x spatial upscale
-    # it's already a cut
+    # it's already a cut, but the first and last few frames are ugly interpolated ones:
     video = video[:]
 
-    '''
-    video = np.array([video] * 10)
-    video = np.transpose(video, (1, 0, 2, 3))
-    sh = video.shape
-    video = video.reshape((sh[0]*sh[1], sh[2], sh[3]))
-    '''
+    do_conveyor_belt_removal = False
+    # speed not yet tuned to be correct
+    if do_conveyor_belt_removal:
+        print("counteracting conveyor belt effect")
+        video = video[::-1, :, :]
+        speed = 2.2
+        t, h, w = video.shape
+        w2 = w + int(speed * t) + 1
+        video2 = np.zeros((t, h, w2))
+        for timestep in range(t):
+            w_delta = int(np.around(speed * timestep))
+            video2[timestep, :, w_delta:(w_delta+w)] = video[timestep, :, :]
 
+        video2 = np.array([video2] * 2)
+        video2 = np.transpose(video2, (1, 0, 2, 3))
+        sh = video2.shape
+        video2 = video2.reshape((sh[0]*sh[1], sh[2], sh[3]))
 
+        video = video2
 elif filename.startswith("horse-slow"):
     video = video[:, 144:444, :]
     video = video[1400:1600]
@@ -118,7 +130,7 @@ video = np.transpose(video, (1, 0, 2))
 video = video[::-1, :, :]
 
 iso_val = 0.5
-temporal_scaling = 10 # one frame has the same width as temporal_scaling pixels.
+temporal_scaling = 3 # one frame has the same width as temporal_scaling pixels.
 verts, faces, normals, values = skimage.measure.marching_cubes(video, level=iso_val, allow_degenerate=False, spacing=(1, temporal_scaling, 1))
 
 print(f"{len(verts)} vertices, {len(faces)} faces")
