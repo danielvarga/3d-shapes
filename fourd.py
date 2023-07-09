@@ -3,6 +3,7 @@
 import numpy as np
 import skvideo.io  
 import skimage.measure
+from stl import mesh
 import visvis as vv
 import matplotlib.pyplot as plt
 
@@ -134,6 +135,18 @@ temporal_scaling = 3 # one frame has the same width as temporal_scaling pixels.
 verts, faces, normals, values = skimage.measure.marching_cubes(video, level=iso_val, allow_degenerate=False, spacing=(1, temporal_scaling, 1))
 
 print(f"{len(verts)} vertices, {len(faces)} faces")
+
+
+print("creating stl mesh")
+your_mesh = mesh.Mesh(np.zeros(faces.shape[0], dtype=mesh.Mesh.dtype))
+for i, face in enumerate(faces):
+    for j in range(3):
+        your_mesh.vectors[i][j] = verts[face[j]]
+
+filename = f"horse.stl"
+your_mesh.save(filename)
+print(f"saved {filename}")
+
 
 print("vv visualization")
 values = np.linalg.norm(normals[:, :2], axis=1)
