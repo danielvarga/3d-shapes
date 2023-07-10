@@ -48,7 +48,7 @@ def save_stl(points, simplices, filename):
 
 
 def main():
-    n = 1000000
+    n = 50000
 
     points = fibonacci_sphere(n, randomize=False)
 
