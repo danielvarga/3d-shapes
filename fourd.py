@@ -55,7 +55,7 @@ elif filename == "horse-tensorpix.mp4":
 elif filename == "horse-tensorpix-s4-t8-run-cut.mp4":
     video = video[:, 4*144:4*444, :] # same part as "horse-slow", but 4x spatial upscale
     # it's already a cut, but the first and last few frames are ugly interpolated ones:
-    video = video[:]
+    video = video[:-66]
 
     do_conveyor_belt_removal = False
     # speed not yet tuned to be correct
@@ -143,13 +143,15 @@ for i, face in enumerate(faces):
     for j in range(3):
         your_mesh.vectors[i][j] = verts[face[j]]
 
+print("vv visualization")
+values = np.linalg.norm(normals[:, :2], axis=1)
+vv.mesh(np.fliplr(verts), faces, normals, values)
+vv.use().Run()
+
+
 filename = f"horse.stl"
 your_mesh.save(filename)
 print(f"saved {filename}")
 
 
-print("vv visualization")
-values = np.linalg.norm(normals[:, :2], axis=1)
-vv.mesh(np.fliplr(verts), faces, normals, values)
-vv.use().Run()
 exit()
